@@ -2,11 +2,9 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.134.1/containers/typescript-node
 {
 	"name": "DDD on Elm",
-	"dockerComposeFile": [
-		"../../container/docker-compose.yml"
-	],
-	"service": "frontend",
-	"workspaceFolder": "/opt/ddd-on-elm",
+	"context": "..",
+	"dockerFile": "Dockerfile",
+	//	"workspaceFolder": "/opt/ddd-on-elm",
 	"build": {
 		// Update 'VARIANT' to pick a Node version: 10, 12, 14
 		"args": {
@@ -18,13 +16,18 @@
 	},
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash"
+		"[elm]": {
+			"editor.formatOnSave": true
+		},
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"window.zoomLevel": 0
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
+		"elmtooling.elm-ls-vscode",
 		"dbaeumer.vscode-eslint",
 		"ms-vscode.vscode-typescript-tslint-plugin"
-	]
+	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
