@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Adapter.AuthApi
 import Adapter.Helper
 import Browser
 import Html exposing (..)
@@ -7,6 +8,8 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Store.Authenticate as Authenticate exposing (Authenticate)
+import Store.Authorize as Authorize exposing (Authorize)
+import Task
 
 
 
@@ -49,8 +52,8 @@ init _ =
 type Msg
     = EnterIdentifier Authenticate.Identifier
     | EnterPassword Authenticate.Password
-    | SubmitRequest Authenticate.Authenticate
-    | SubmitResponse (Result Http.Error Authenticate)
+    | SubmitRequest Authenticate
+    | SubmitResponse (Result Http.Error Authorize)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -95,7 +98,7 @@ update msg model =
 
                 Ok verifiedAuthenticate ->
                     ( { model | authenticate = verifiedAuthenticate }
-                    , Cmd.none
+                    , Task.attempt SubmitResponse <| Adapter.AuthApi.login verifiedAuthenticate
                     )
 
         SubmitResponse (Err err) ->

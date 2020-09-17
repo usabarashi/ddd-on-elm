@@ -20,10 +20,19 @@ validate authenticate =
         ( Nothing, Nothing ) ->
             Err "ID and password not entered."
 
+        ( Just "", Just "" ) ->
+            Err "ID and password not entered."
+
         ( Nothing, _ ) ->
             Err "ID no entered."
 
+        ( Just "", _ ) ->
+            Err "ID no entered."
+
         ( _, Nothing ) ->
+            Err "Password not entered."
+
+        ( _, Just "" ) ->
             Err "Password not entered."
 
         _ ->
