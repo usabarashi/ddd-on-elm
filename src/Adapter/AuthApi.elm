@@ -3,7 +3,6 @@ module Adapter.AuthApi exposing (..)
 import Adapter.Helper
 import Http exposing (..)
 import Json.Decode
-import Json.Encode
 import Store.Authenticate as Authenticate exposing (Authenticate)
 import Store.Authorize as Authorize exposing (Authorize)
 import Task
@@ -17,11 +16,11 @@ authApiUrl =
 login : Authenticate -> Task.Task Http.Error Authorize
 login auth =
     let
-        requestEncoder : Authenticate -> Json.Encode.Value
+        requestEncoder : Authenticate -> Http.Body
         requestEncoder decodeAuth =
-            Json.Encode.object
-                [ ( "username", Json.Encode.string <| Maybe.withDefault "" decodeAuth.maybeIdentifier )
-                , ( "password", Json.Encode.string <| Maybe.withDefault "" decodeAuth.maybePassword )
+            Http.multipartBody
+                [ stringPart "username" <| Maybe.withDefault "" decodeAuth.maybeIdentifier
+                , stringPart "password" <| Maybe.withDefault "" decodeAuth.maybePassword
                 ]
 
         responseDecoder : Json.Decode.Decoder Authorize
@@ -34,15 +33,7 @@ login auth =
         { method = "POST"
         , headers = []
         , url = authApiUrl ++ "/auth/token"
-        , body =
-            Http.multipartBody
-                [ stringPart "username" <| Maybe.withDefault "" auth.maybeIdentifier
-                , stringPart "password" <| Maybe.withDefault "" auth.maybePassword
-                ]
+        , body = requestEncoder auth
         , resolver = Adapter.Helper.jsonResolver responseDecoder
         , timeout = Nothing
         }
-
-
-
---, body = Http.jsonBody <| requestEncoder auth
