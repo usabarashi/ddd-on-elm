@@ -1,4 +1,4 @@
-module Store.Authenticate exposing (Authenticate, Identifier, Password, init, validate)
+module Domain.Authenticate exposing (Authenticate, Identifier, Password, init, validate)
 
 
 type alias Authenticate =

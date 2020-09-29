@@ -1,4 +1,4 @@
-module Store.Authorize exposing (..)
+module Domain.Authorize exposing (..)
 
 
 type alias Authorize =

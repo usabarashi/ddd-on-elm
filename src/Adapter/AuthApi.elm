@@ -1,10 +1,10 @@
 module Adapter.AuthApi exposing (..)
 
 import Adapter.Helper
+import Domain.Authenticate as Authenticate exposing (Authenticate)
+import Domain.Authorize as Authorize exposing (Authorize)
 import Http exposing (..)
 import Json.Decode
-import Store.Authenticate as Authenticate exposing (Authenticate)
-import Store.Authorize as Authorize exposing (Authorize)
 import Task
 
 
