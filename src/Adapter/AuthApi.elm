@@ -10,7 +10,7 @@ import Task
 
 authApiUrl : String
 authApiUrl =
-    "http://localhost:8000"
+    "http://localhost:3000"
 
 
 login : Authenticate -> Task.Task Http.Error Authorize
@@ -30,9 +30,11 @@ login auth =
                 (Json.Decode.field "token_type" Json.Decode.string)
     in
     Http.task
-        { method = "POST"
+    --    { method = "POST"
+        { method = "GET"
         , headers = []
-        , url = authApiUrl ++ "/auth/token"
+    --    , url = authApiUrl ++ "/auth/token.json"
+        , url = authApiUrl ++ "/dummy_response.json"
         , body = requestEncoder auth
         , resolver = Adapter.Helper.jsonResolver responseDecoder
         , timeout = Nothing

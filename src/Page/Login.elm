@@ -1,5 +1,6 @@
 module Page.Login exposing (..)
 
+import Route
 import Adapter.Helper
 import Command.Actor as Actor exposing (login)
 import Domain.Authenticate as Authenticate exposing (Authenticate)
@@ -87,9 +88,22 @@ update msg model =
             , Cmd.none
             )
 
-        LoginResponse (Ok token) ->
-            ( { model | message = Just "Success" }
-            , Cmd.none
+        LoginResponse (Ok authorize) ->
+            let
+                session : Session
+                session =
+                    model.session
+
+                modifiedSession : Session
+                modifiedSession =
+                    { session | authorize = authorize.token }
+
+                switchTokenPageCmd : Cmd msg
+                switchTokenPageCmd =
+                    Route.replaceUrl modifiedSession.key Route.Top
+            in
+            ( { model | session = modifiedSession }
+            , Cmd.batch [ switchTokenPageCmd ]
             )
 
 
