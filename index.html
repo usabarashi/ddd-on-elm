@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Main</title>
+    <meta charset="UTF-8">
+    <script src='main.js'></script>
+</head>
+
+<body>
+    <script type='text/javascript'>
+        var app = Elm.Main.init({
+            flags: localStorage.getItem('token')
+        });
+        app.ports.saveTokenRequest.subscribe(function (token) {
+            localStorage.setItem('token', token);
+            //app.ports.saveTokenResponse(token); // FIXME
+        });
+        app.ports.deleteTokenRequest.subscribe(function () {
+            localStorage.removeItem('token');
+            //app.ports.deleteTokenResponse(); // FIXME
+        });
+    </script>
+</body>
+
+</html>
