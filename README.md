@@ -17,7 +17,7 @@ $ npm run build
 # Run
 
 ```
-$ npm run hot-reload
+$ npm run live-reload
 ```
 
 # Reference

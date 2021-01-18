@@ -10,7 +10,7 @@ import Task
 
 authApiUrl : String
 authApiUrl =
-    "http://localhost:3000"
+    "http://127.0.0.1:3000"
 
 
 login : Authenticate -> Task.Task Http.Error Authorize

@@ -11,7 +11,7 @@
 		}
 	},
 	"remoteEnv": {
-		"PATH": "${containerEnv:PATH}:/workspaces/frontend/node_modules/.bin",
+		"PATH": "${containerEnv:PATH}:${containerWorkspaeFolder}/node_modules/.bin",
 	},
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
@@ -19,7 +19,6 @@
 			"editor.formatOnSave": true
 		},
 		"terminal.integrated.shell.linux": "/bin/bash",
-		"window.zoomLevel": 0
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
