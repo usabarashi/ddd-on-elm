@@ -1,5 +1,4 @@
-# new elm-spa project
-> More documentation at https://elm-spa.dev
+# DDD on Elm 
 
 ## local development
 
@@ -19,7 +18,6 @@ Command | Description
 `npm run test:watch` | Run tests as you code.
 `npm run build` | Build the site for production.
 `npm run test` | Run the test suite once, great for CI
-
 
 ## deploying
 

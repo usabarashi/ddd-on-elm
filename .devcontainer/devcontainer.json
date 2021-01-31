@@ -1,10 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.155.1/containers/elm
 {
-	"name": "Elm (Community)",
+	"name": "DDD on Elm",
 	"dockerFile": "Dockerfile",
 	"remoteEnv": {
-		"PATH": "${containerEnv:PATH}:${containerWorkspaeFolder}/node_modules/.bin",
+		"PATH": "${containerEnv:PATH}:${WorkspaeFolder}/node_modules/.bin",
 	},
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
