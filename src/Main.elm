@@ -1,216 +1,148 @@
 module Main exposing (main)
 
-import Adapter.AuthApi
-import Adapter.Helper
 import Browser
-import Browser.Navigation
-import Domain.Authorize as Authorize exposing (Authorize)
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
-import Http
-import Page.Login
-import Page.Top
-import Route exposing (Route)
-import Store.Session as Session exposing (Session)
-import Url
-import Url.Builder
+import Browser.Navigation as Nav
+import Shared exposing (Flags)
+import Spa.Document as Document exposing (Document)
+import Spa.Generated.Pages as Pages
+import Spa.Generated.Route as Route exposing (Route)
+import Url exposing (Url)
 
 
-
--- MAIN
-
-
-main : Program (Maybe Authorize.Token) Page Msg
+main : Program Flags Model Msg
 main =
     Browser.application
         { init = init
-        , view = view
         , update = update
         , subscriptions = subscriptions
+        , view = view >> Document.toBrowserDocument
         , onUrlRequest = LinkClicked
         , onUrlChange = UrlChanged
         }
 
 
 
--- MODEL
+-- INIT
 
 
-type Page
-    = NotFound Session
-    | LoginPage Page.Login.Model
-    | TopPage Page.Top.Model
+type alias Model =
+    { shared : Shared.Model
+    , page : Pages.Model
+    }
 
 
-init : Maybe Authorize.Token -> Url.Url -> Browser.Navigation.Key -> ( Page, Cmd Msg )
-init maybeToken url key =
+init : Flags -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
     let
-        initialSession : Session
-        initialSession =
-            Session.create key <| Authorize.create (Maybe.withDefault "" maybeToken) ""
+        ( shared, sharedCmd ) =
+            Shared.init flags url key
 
-        initialPage : Page
-        initialPage =
-            NotFound initialSession
+        ( page, pageCmd ) =
+            Pages.init (fromUrl url) shared
+
+        savedShare =
+            Pages.save page shared
     in
-    switchPage (Route.parse url) initialPage
+    ( Model savedShare page
+    , Cmd.batch
+        [ Cmd.map Shared sharedCmd
+        , Cmd.map Pages pageCmd
+        ]
+    )
 
 
-getSession : Page -> Session
-getSession page =
-    case page of
-        NotFound session ->
-            session
 
-        LoginPage model ->
-            model.session
-
-        TopPage model ->
-            model.session
+-- UPDATE
 
 
 type Msg
     = LinkClicked Browser.UrlRequest
-    | UrlChanged Url.Url
-    | LoginMsg Page.Login.Msg
-    | TopMsg Page.Top.Msg
+    | UrlChanged Url
+    | Shared Shared.Msg
+    | Pages Pages.Msg
 
 
-update : Msg -> Page -> ( Page, Cmd Msg )
-update msg page =
-    let
-        session : Session
-        session =
-            getSession page
-    in
-    case ( msg, page ) of
-        -- Routing case
-        ( LinkClicked (Browser.Internal url), _ ) ->
-            ( page, Browser.Navigation.pushUrl session.key (Url.toString url) )
-
-        ( LinkClicked (Browser.External href), _ ) ->
-            ( page, Browser.Navigation.load href )
-
-        ( UrlChanged url, _ ) ->
-            switchPage (Route.parse url) page
-
-        -- Login page case
-        ( LoginMsg loginMsg, LoginPage loginModel ) ->
-            let
-                ( modifiedLoginModel, loginCmd ) =
-                    Page.Login.update loginMsg loginModel
-            in
-            ( LoginPage modifiedLoginModel, Cmd.map LoginMsg loginCmd )
-
-        ( LoginMsg loginMsg, _ ) ->
-            ( page, Cmd.none )
-
-        -- Token page case
-        ( TopMsg topMsg, TopPage topModel ) ->
-            let
-                ( newTopModel, topCmd ) =
-                    Page.Top.update topMsg topModel
-            in
-            ( TopPage newTopModel, Cmd.map TopMsg topCmd )
-
-        ( TopMsg topMsg, _ ) ->
-            ( page, Cmd.none )
-
-
-switchPage : Maybe Route -> Page -> ( Page, Cmd Msg )
-switchPage maybeRoute page =
-    let
-        session : Session
-        session =
-            getSession page
-    in
-    case maybeRoute of
-        Nothing ->
-            ( NotFound session
-            , Cmd.none
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        LinkClicked (Browser.Internal url) ->
+            ( model
+            , Nav.pushUrl model.shared.key (Url.toString url)
             )
 
-        Just Route.Login ->
-            ( LoginPage <| Page.Login.create <| Session.create session.key Authorize.init
-            , Cmd.none
+        LinkClicked (Browser.External href) ->
+            ( model
+            , Nav.load href
             )
 
-        Just Route.Top ->
+        UrlChanged url ->
             let
-                ( topModel, topCmd ) =
-                    Page.Top.init session
+                original =
+                    model.shared
+
+                shared =
+                    { original | url = url }
+
+                ( page, pageCmd ) =
+                    Pages.init (fromUrl url) shared
             in
-            ( TopPage topModel
-            , Cmd.map TopMsg topCmd
+            ( { model | page = page, shared = Pages.save page shared }
+            , Cmd.map Pages pageCmd
+            )
+
+        Shared sharedMsg ->
+            let
+                ( shared, sharedCmd ) =
+                    Shared.update sharedMsg model.shared
+
+                ( page, pageCmd ) =
+                    Pages.load model.page shared
+            in
+            ( { model | page = page, shared = shared }
+            , Cmd.batch
+                [ Cmd.map Shared sharedCmd
+                , Cmd.map Pages pageCmd
+                ]
+            )
+
+        Pages pageMsg ->
+            let
+                ( page, pageCmd ) =
+                    Pages.update pageMsg model.page
+
+                shared =
+                    Pages.save page model.shared
+            in
+            ( { model | page = page, shared = shared }
+            , Cmd.map Pages pageCmd
             )
 
 
-
--- Subscriptions
-
-
-subscriptions : Page -> Sub Msg
-subscriptions page =
-    Sub.none
-
-
-
---  VIEW
+view : Model -> Document Msg
+view model =
+    Shared.view
+        { page =
+            Pages.view model.page
+                |> Document.map Pages
+        , toMsg = Shared
+        }
+        model.shared
 
 
-view : Page -> Browser.Document Msg
-view page =
-    { title = "ddd on elm"
-    , body =
-        let
-            logoutButton : msg -> Html msg
-            logoutButton msg =
-                Html.form
-                    [ onSubmit msg ]
-                    [ button [ style "padding" "5px", style "backgroundColor" "#DD493A" ] [ text "Logout" ] ]
-        in
-        [ case page of
-            NotFound session ->
-                viewNotFound
-
-            LoginPage loginPageModel ->
-                Page.Login.view loginPageModel
-                    |> Html.map LoginMsg
-
-            TopPage topPageModel ->
-                div
-                    []
-                    [ header
-                        [ style "position" "fixed"
-                        , style "top" "0"
-                        , style "left" "0"
-                        , style "width" "100%"
-                        , style "height" "40px"
-                        , style "display" "flex"
-                        , style "flex" "1"
-                        , style "flex-direction" "row"
-                        , style "alignItems" "center"
-                        , style "justify-content" "space-between"
-                        , style "borderBottom" "1px solid silver"
-                        , style "boxSizing" "border-box"
-                        , style "backgroundColor" "#7EB709"
-                        ]
-                        [ h1
-                            [ style "fontSize" "large"
-                            , style "fontStyle" "italic"
-                            , style "color" "white"
-                            , style "margin" "0"
-                            ]
-                            [ text "ddd on elm" ]
-                        ]
-                    , Page.Top.view topPageModel
-                        |> Html.map TopMsg
-                    ]
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Shared.subscriptions model.shared
+            |> Sub.map Shared
+        , Pages.subscriptions model.page
+            |> Sub.map Pages
         ]
-    }
 
 
-viewNotFound : Html msg
-viewNotFound =
-    text "Not Found"
+
+-- URL
+
+
+fromUrl : Url -> Route
+fromUrl =
+    Route.fromUrl >> Maybe.withDefault Route.NotFound

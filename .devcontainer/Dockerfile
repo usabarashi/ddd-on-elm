@@ -1,14 +1,26 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.134.1/containers/typescript-node/.devcontainer/base.Dockerfile
-ARG VARIANT="14"
-FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:0-${VARIANT}
+FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-12-buster
 
-# [Optional] Uncomment this section to install additional OS packages.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
+# Configuring Elm version
+ARG ELM_VERSION=latest-0.19.1
+ARG ELM_TEST_VERSION=latest-0.19.1
+ARG ELM_FORMAT_VERSION=latest-0.19.1
 
-# [Optional] Uncomment if you want to install an additional version of node using nvm
-# ARG EXTRA_NODE_VERSION=10
-# RUN su node -c "source /usr/local/share/nvm/nvm.sh && nvm install ${EXTRA_NODE_VERSION}"
+# This Dockerfile adds a non-root user with sudo access. Update the “remoteUser” property in
+# devcontainer.json to use it. More info: https://aka.ms/vscode-remote/containers/non-root-user.
+ARG USERNAME=node
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
 
-# [Optional] Uncomment if you want to install more global node packages
-# RUN sudo -u node npm install -g <your-package-list -here>
+# Install elm, elm-test and elm-format
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && sudo -u ${USERNAME} npm install --global \
+    elm@${ELM_VERSION} \
+    elm-test@${ELM_TEST_VERSION} \
+    elm-format@${ELM_FORMAT_VERSION} \
+    #
+    # [Optional] Update UID/GID if needed
+    && if [ "$USER_GID" != "1000" ] || [ "$USER_UID" != "1000" ]; then \
+        groupmod --gid $USER_GID $USERNAME \
+        && usermod --uid $USER_UID --gid $USER_GID $USERNAME \
+        && chown -R $USER_UID:$USER_GID /home/$USERNAME; \
+    fi

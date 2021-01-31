@@ -1,6 +1,8 @@
-# elm-package generated files
+# Folders to ignore
 elm-stuff
-# elm-repl generated files
-repl-temp-*
 node_modules
-main.js
+public/dist
+src/Spa/Generated
+
+# MacOS weird stuff
+.DS_Store
