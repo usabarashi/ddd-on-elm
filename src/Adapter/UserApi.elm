@@ -40,10 +40,10 @@ save saveUser =
         requestEncoder : User -> Json.Encode.Value
         requestEncoder user =
             Json.Encode.object
-                [ ( "identifier", Json.Encode.string <| user.identifier )
-                , ( "password", Json.Encode.string <| user.password )
-                , ( "name", Json.Encode.string <| user.name )
-                , ( "emailAddress", Json.Encode.string <| user.emailAddress )
+                [ ( "identifier", Json.Encode.string user.identifier )
+                , ( "password", Json.Encode.string user.password )
+                , ( "name", Json.Encode.string user.name )
+                , ( "emailAddress", Json.Encode.string user.emailAddress )
                 ]
 
         responseDecoder : Json.Decode.Decoder User

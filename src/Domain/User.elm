@@ -55,7 +55,8 @@ type alias EMailAddress =
 
 
 type Msg
-    = EnterIdentifier Identifier
+    = -- On memory case
+      EnterIdentifier Identifier
     | EnterPassword Password
     | EnterConfirmPassword Password
     | EnterName Name
@@ -65,11 +66,21 @@ type Msg
 update : Msg -> User -> ( User, Cmd Msg )
 update msg model =
     case msg of
+        -- On memory case
         EnterIdentifier identifier ->
             ( { model | identifier = identifier }, Cmd.none )
 
         EnterPassword password ->
-            ( { model | password = password }, Cmd.none )
+            let
+                validPassword : String
+                validPassword =
+                    if password == model.confirmPassword then
+                        ""
+
+                    else
+                        "Password mismatch."
+            in
+            ( { model | password = password, validPassword = validPassword }, Cmd.none )
 
         EnterConfirmPassword confirmPassword ->
             let
@@ -81,12 +92,7 @@ update msg model =
                     else
                         "Password mismatch."
             in
-            ( { model
-                | confirmPassword = confirmPassword
-                , validPassword = validPassword
-              }
-            , Cmd.none
-            )
+            ( { model | confirmPassword = confirmPassword, validPassword = validPassword }, Cmd.none )
 
         EnterName name ->
             ( { model | name = name }, Cmd.none )
@@ -100,19 +106,14 @@ update msg model =
                     else
                         "Invalid email address format."
             in
-            ( { model
-                | emailAddress = emailAddress
-                , validEMailAddres = validEMailAddress
-              }
-            , Cmd.none
-            )
+            ( { model | emailAddress = emailAddress, validEMailAddres = validEMailAddress }, Cmd.none )
 
 
 
 -- VIEW
 
 
-listTitle : Html Msg
+listTitle : Html msg
 listTitle =
     tr []
         [ th [] [ text "ID" ]
@@ -121,14 +122,11 @@ listTitle =
         ]
 
 
-listView : User -> Html Msg
+listView : User -> Html msg
 listView model =
     tr [ style "border" "solid thin" ]
         [ td []
-            [ a
-                [ class "link"
-                , href <| Route.toString Route.EditUser ++ "/" ++ model.identifier
-                ]
+            [ a [ class "link", href <| Route.toString Route.EditUser ++ "/" ++ model.identifier ]
                 [ text model.identifier ]
             ]
         , td [] [ text model.name ]

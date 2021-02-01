@@ -60,7 +60,8 @@ init { params } =
 
 
 type Msg
-    = EnterQuery Query
+    = -- On memory case
+      EnterQuery Query
       -- Query case
     | SearchRequest Query
     | SearchResponse (Result Http.Error (List User))
@@ -71,6 +72,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        -- On memory case
         EnterQuery query ->
             ( { model | query = query }, Cmd.none )
 
@@ -81,8 +83,8 @@ update msg model =
         SearchResponse (Err err) ->
             ( { model | message = Just <| Adapter.Helper.httpErrorMessage err }, Cmd.none )
 
-        SearchResponse (Ok users) ->
-            ( { model | users = users, message = Nothing }, Cmd.none )
+        SearchResponse (Ok foundUsers) ->
+            ( { model | users = foundUsers, message = Nothing }, Cmd.none )
 
         -- Nest message case
         ViewUser userMsg ->
@@ -111,24 +113,18 @@ view model =
                 ]
                 []
 
-        submitButton : Html Msg
+        submitButton : Html msg
         submitButton =
             button [ style "display" "flex", style "flex" "1" ] [ text "Search" ]
-
-        title =
-            Html.map ViewUser User.listTitle
 
         userViewList =
             List.map (Html.map ViewUser) (List.map User.listView model.users)
     in
     { title = "FindUser"
     , body =
-        [ Html.form
-            [ onSubmit (SearchRequest model.query)
-            ]
+        [ Html.form [ onSubmit (SearchRequest model.query) ]
             [ table []
-                [ tr
-                    [ style "border" "solid thin" ]
+                [ tr [ style "border" "solid thin" ]
                     [ td [] [ queryInputField ]
                     , td [] [ submitButton ]
                     ]
@@ -136,7 +132,7 @@ view model =
             ]
         , div [ style "color" "red" ] [ text <| Maybe.withDefault "" model.message ]
         , table [ style "border" "solid thin", style "border-collapse" "collapse" ] <|
-            title
+            User.listTitle
                 :: userViewList
         ]
     }

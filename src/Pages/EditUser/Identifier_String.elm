@@ -43,12 +43,7 @@ type alias Model =
 
 init : Url Params -> ( Model, Cmd Msg )
 init url =
-    let
-        gatUser : User
-        gatUser =
-            User.create url.params.identifier "" "" ""
-    in
-    ( { user = gatUser
+    ( { user = User.create url.params.identifier "" "" ""
       , message = Nothing
       , key = url.key
       }
@@ -65,7 +60,8 @@ type alias Message =
 
 
 type Msg
-    = UpdateUser User.Msg
+    = -- On memory case
+      UpdateUser User.Msg
       -- Repository case
     | GetRequest User.Identifier
     | GetResponse (Result Http.Error User)
@@ -76,7 +72,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        -- Onmemory case
+        -- On memory case
         UpdateUser userMsg ->
             let
                 ( modifiedUserModel, userCmd ) =
@@ -101,12 +97,7 @@ update msg model =
             ( { model | message = Just <| Adapter.Helper.httpErrorMessage err }, Cmd.none )
 
         SaveResponse (Ok savedUser) ->
-            ( { model
-                | user = savedUser
-                , message = Nothing
-              }
-            , Spa.Route.navigate model.key Route.Top
-            )
+            ( { model | user = savedUser, message = Nothing }, Spa.Route.navigate model.key Route.Top )
 
 
 subscriptions : Model -> Sub Msg
@@ -121,14 +112,14 @@ subscriptions model =
 view : Model -> Document Msg
 view model =
     let
-        submitButton : Html Msg
+        submitButton : Html msg
         submitButton =
             button [ style "display" "flex", style "flex" "1" ] [ text "Save" ]
     in
     { title = "EditUser"
     , body =
         [ Html.form [ onSubmit (SaveRequest model.user) ]
-            [ User.unitView model.user |> Html.map UpdateUser
+            [ Html.map UpdateUser <| User.unitView model.user
             , div [ style "color" "red" ] [ text <| Maybe.withDefault "" model.message ]
             , submitButton
             ]
