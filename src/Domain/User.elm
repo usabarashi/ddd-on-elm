@@ -14,11 +14,11 @@ import Spa.Generated.Route as Route
 type alias User =
     { identifier : Identifier
     , password : Password
-    , confirmPassword : Password
-    , validPassword : String
+    , confirmPassword : Maybe Password
+    , validPassword : Maybe ErrorMessage
     , name : Name
     , emailAddress : EMailAddress
-    , validEMailAddres : String
+    , validEMailAddres : Maybe ErrorMessage
     }
 
 
@@ -27,10 +27,10 @@ create identifier password name emailAddress =
     { identifier = identifier
     , password = password
     , name = name
-    , confirmPassword = ""
-    , validPassword = ""
+    , confirmPassword = Nothing
+    , validPassword = Nothing
     , emailAddress = emailAddress
-    , validEMailAddres = ""
+    , validEMailAddres = Nothing
     }
 
 
@@ -47,6 +47,10 @@ type alias Name =
 
 
 type alias EMailAddress =
+    String
+
+
+type alias ErrorMessage =
     String
 
 
@@ -72,39 +76,59 @@ update msg model =
 
         EnterPassword password ->
             let
-                validPassword : String
+                validPassword : Maybe ErrorMessage
                 validPassword =
-                    if password == model.confirmPassword then
-                        ""
+                    if model.confirmPassword == Nothing then
+                        Nothing
+
+                    else if password == Maybe.withDefault "" model.confirmPassword then
+                        Nothing
 
                     else
-                        "Password mismatch."
+                        Just "Password mismatch."
             in
             ( { model | password = password, validPassword = validPassword }, Cmd.none )
 
         EnterConfirmPassword confirmPassword ->
             let
-                validPassword : String
-                validPassword =
-                    if model.password == confirmPassword then
-                        ""
+                maybeConfirmPassword : Maybe Password
+                maybeConfirmPassword =
+                    if confirmPassword == "" then
+                        Nothing
 
                     else
-                        "Password mismatch."
+                        Just confirmPassword
+
+                validPassword : Maybe ErrorMessage
+                validPassword =
+                    if confirmPassword == "" then
+                        Nothing
+
+                    else if model.password == confirmPassword then
+                        Nothing
+
+                    else
+                        Just "Password mismatch."
             in
-            ( { model | confirmPassword = confirmPassword, validPassword = validPassword }, Cmd.none )
+            ( { model
+                | confirmPassword = maybeConfirmPassword
+                , validPassword = validPassword
+              }
+            , Cmd.none
+            )
 
         EnterName name ->
             ( { model | name = name }, Cmd.none )
 
         EnterEMailAddress emailAddress ->
             let
+                validEMailAddress : Maybe ErrorMessage
                 validEMailAddress =
                     if Email.isValid emailAddress then
-                        ""
+                        Nothing
 
                     else
-                        "Invalid email address format."
+                        Just "Invalid email address format."
             in
             ( { model | emailAddress = emailAddress, validEMailAddres = validEMailAddress }, Cmd.none )
 
@@ -162,7 +186,7 @@ unitView model =
             input
                 [ type_ "password"
                 , placeholder "* Enter confirm password."
-                , value model.confirmPassword
+                , value <| Maybe.withDefault "" model.confirmPassword
                 , onInput EnterConfirmPassword
                 ]
                 []
@@ -191,8 +215,8 @@ unitView model =
         [ div [] [ identifierInputField ]
         , div [] [ passwordInputField ]
         , div [] [ confirmPasswordInputField ]
-        , div [ style "color" "red" ] [ text model.validPassword ]
+        , div [ style "color" "red" ] [ text <| Maybe.withDefault "" model.validPassword ]
         , div [] [ nameInputField ]
         , div [] [ emailAddressInputField ]
-        , div [ style "color" "red" ] [ text model.validEMailAddres ]
+        , div [ style "color" "red" ] [ text <| Maybe.withDefault "" model.validEMailAddres ]
         ]
